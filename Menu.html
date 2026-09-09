@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal UVY</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --azul:   #1B3A6B;
+  --azul-l: #2B5399;
+  --dorado: #C8A951;
+  --bg:     #F0F3F8;
+  --card:   #FFFFFF;
+  --border: #D1D9E6;
+  --text:   #1A2035;
+  --muted:  #6B7A99;
+  --radius: 12px;
+  --shadow: 0 2px 14px rgba(27,58,107,.10);
+}
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg); color: var(--text); min-height: 100vh;
+}
+header {
+  background: var(--azul); color: #fff;
+  padding: 16px 32px; display: flex; align-items: center;
+  justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.brand { font-size: 1.2rem; font-weight: 700; }
+.brand span { color: var(--dorado); }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.user-info { text-align: right; }
+.user-name { font-size: .9rem; font-weight: 600; }
+.user-rol  { font-size: .73rem; opacity: .7; margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+.btn-logout {
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+  color: #fff; border-radius: 7px; padding: 7px 14px;
+  font-size: .8rem; font-weight: 600; cursor: pointer; transition: background .15s;
+}
+.btn-logout:hover { background: rgba(255,255,255,.25); }
+
+.container { max-width: 900px; margin: 0 auto; padding: 40px 20px 60px; }
+.welcome {
+  font-size: 1.5rem; font-weight: 700; color: var(--azul); margin-bottom: 6px;
+}
+.welcome-sub { font-size: .9rem; color: var(--muted); margin-bottom: 36px; }
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+.menu-card {
+  background: var(--card); border-radius: var(--radius);
+  box-shadow: var(--shadow); border: 1.5px solid var(--border);
+  padding: 28px 24px; cursor: pointer;
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+  text-decoration: none; color: inherit; display: block;
+}
+.menu-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 24px rgba(27,58,107,.16);
+  border-color: var(--azul-l);
+}
+a.menu-card { text-decoration: none; }
+.menu-card.disabled {
+  opacity: .45; cursor: not-allowed; pointer-events: none;
+}
+.menu-card.soon {
+  opacity: .6; cursor: default; pointer-events: none;
+}
+.card-icon {
+  font-size: 2.2rem; margin-bottom: 14px;
+  width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;
+  background: #EEF2FA; border-radius: 10px;
+}
+.card-title { font-size: 1rem; font-weight: 700; color: var(--azul); margin-bottom: 6px; }
+.card-desc  { font-size: .8rem; color: var(--muted); line-height: 1.4; }
+.card-badge {
+  display: inline-block; margin-top: 12px;
+  font-size: .68rem; font-weight: 700; padding: 3px 8px;
+  border-radius: 20px; letter-spacing: .4px; text-transform: uppercase;
+}
+.badge-director { background: #FEF3C7; color: #92400E; }
+.badge-soon     { background: #F3F4F6; color: var(--muted); }
+
+.spinner-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(240,243,248,.85); z-index: 999;
+  align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+}
+.spinner-overlay.active { display: flex; }
+.big-spinner {
+  width: 44px; height: 44px;
+  border: 5px solid var(--border); border-top-color: var(--azul);
+  border-radius: 50%; animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="spinner-overlay" id="overlay">
+  <div class="big-spinner"></div>
+  <span style="color:var(--azul);font-weight:600">Cargando…</span>
+</div>
+
+<header>
+  <div>
+    <div class="brand">Universidad de Valladolid <span>Yucatán</span></div>
+  </div>
+  <div class="header-right">
+    <div class="user-info">
+      <div class="user-name" id="header-nombre">—</div>
+      <div class="user-rol"  id="header-rol">—</div>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="welcome">Bienvenido, <span id="nombre-display">—</span></div>
+  <div class="welcome-sub">Selecciona el servicio que necesitas.</div>
+
+  <div class="menu-grid" id="menu-grid"></div>
+
+  <!-- DEBUG TEMPORAL -->
+  <div id="debug-panel" style="margin-top:32px;background:#1e1e1e;color:#0f0;font-family:monospace;font-size:.75rem;padding:16px;border-radius:8px;overflow-x:auto">
+    <div><strong style="color:#fff">DEBUG INFO (eliminar después)</strong></div>
+    <div id="dbg"></div>
+  </div>
+</div>
+
+<script>
+var TOKEN   = '<?!= token ?>';
+var NOMBRE  = '<?!= nombre ?>';
+var ROL     = '<?!= rol ?>';
+var APP_URL = '<?!= appUrl ?>';
+
+// DEBUG
+var dbg = document.getElementById('dbg');
+dbg.innerHTML =
+  '<div>APP_URL: <span style="color:#ff0">' + APP_URL + '</span></div>' +
+  '<div>TOKEN (primeros 8): <span style="color:#ff0">' + TOKEN.substring(0,8) + '...</span></div>' +
+  '<div>ROL: <span style="color:#ff0">' + ROL + '</span></div>' +
+  '<div>URL espacios: <span style="color:#0ff">' + APP_URL + '?token=' + encodeURIComponent(TOKEN) + '&page=form</span></div>';
+
+document.getElementById('header-nombre').textContent  = NOMBRE;
+document.getElementById('header-rol').textContent     = ROL;
+document.getElementById('nombre-display').textContent = NOMBRE.split(' ')[0];
+
+var esDirector = ROL.toLowerCase() === 'director';
+
+var MENU = [
+  {
+    icon: '🏛️',
+    title: 'Solicitud de Espacios',
+    desc: 'Reserva aulas, laboratorios y espacios para actividades académicas.',
+    page: 'form',
+    roles: ['Director', 'Usuario'],
+    soon: false
+  },
+  {
+    icon: '🎫',
+    title: 'Solicitud de Tickets',
+    desc: 'Reporta incidencias o solicita apoyo al departamento de soporte técnico.',
+    page: 'tickets',
+    roles: ['Director', 'Usuario'],
+    soon: true
+  },
+  {
+    icon: '🛒',
+    title: 'Solicitud de Compras',
+    desc: 'Solicita la adquisición de materiales o equipos para tu área.',
+    page: 'compras',
+    roles: ['Director'],
+    soon: true
+  },
+  {
+    icon: '📋',
+    title: 'Próximamente',
+    desc: 'Nuevo servicio en desarrollo.',
+    page: '',
+    roles: ['Director', 'Usuario'],
+    soon: true
+  },
+  {
+    icon: '📊',
+    title: 'Próximamente',
+    desc: 'Nuevo servicio en desarrollo.',
+    page: '',
+    roles: ['Director', 'Usuario'],
+    soon: true
+  }
+];
+
+var grid = document.getElementById('menu-grid');
+
+MENU.forEach(function(item) {
+  var tieneAcceso = item.roles.indexOf(ROL) >= 0;
+  if (!tieneAcceso) return;
+
+  var badge = '';
+  if (item.roles.length === 1 && item.roles[0] === 'Director') {
+    badge += '<span class="card-badge badge-director">Solo Directores</span>';
+  }
+  if (item.soon) {
+    badge += '<span class="card-badge badge-soon">Próximamente</span>';
+  }
+
+  var inner =
+    '<div class="card-icon">' + item.icon + '</div>' +
+    '<div class="card-title">' + item.title + '</div>' +
+    '<div class="card-desc">'  + item.desc  + '</div>' +
+    badge;
+
+  var card;
+  if (!item.soon && item.page) {
+    card = document.createElement('a');
+    card.className = 'menu-card';
+    card.href   = APP_URL + '?token=' + encodeURIComponent(TOKEN) + '&page=' + item.page;
+    card.target = '_top';
+  } else {
+    card = document.createElement('div');
+    card.className = 'menu-card soon';
+  }
+
+  card.innerHTML = inner;
+  grid.appendChild(card);
+});
+
+function doLogout() {
+  google.script.run.logout(TOKEN);
+  window.top.location.href = APP_URL;
+}
+</script>
+</body>
+</html>

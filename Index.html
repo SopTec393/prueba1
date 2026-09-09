@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solicitud de Espacios – UVY</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --azul:      #1B3A6B;
+  --azul-light:#2B5399;
+  --dorado:    #C8A951;
+  --bg:        #F0F3F8;
+  --card:      #FFFFFF;
+  --border:    #D1D9E6;
+  --text:      #1A2035;
+  --muted:     #6B7A99;
+  --danger:    #D94040;
+  --green:     #2E8B57;
+  --slot-free: #D6EFD8;
+  --slot-book: #F5C6C6;
+  --slot-sel:  #3B82F6;
+  --radius:    10px;
+  --shadow:    0 2px 12px rgba(27,58,107,.10);
+}
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+header {
+  background: var(--azul); color: #fff;
+  padding: 18px 32px; display: flex; align-items: center; gap: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+header .brand { font-size: 1.35rem; font-weight: 700; }
+header .brand span { color: var(--dorado); }
+header .subtitle { font-size: .82rem; opacity: .75; margin-top: 2px; }
+
+.container { max-width: 860px; margin: 0 auto; padding: 32px 16px 60px; }
+
+.section-header { display: flex; align-items: center; gap: 12px; margin: 32px 0 16px; }
+.section-badge {
+  background: var(--azul); color: #fff;
+  font-size: .72rem; font-weight: 700; padding: 4px 10px;
+  border-radius: 20px; letter-spacing: .5px; white-space: nowrap;
+}
+.section-title { font-size: 1.1rem; font-weight: 700; color: var(--azul); }
+
+.card {
+  background: var(--card); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 28px; margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+
+.field { margin-bottom: 20px; }
+.field label { display: block; font-size: .83rem; font-weight: 600; color: var(--azul); margin-bottom: 6px; }
+.required::after { content: ' *'; color: var(--danger); }
+
+input[type="text"], input[type="number"], input[type="date"],
+input[type="time"], select, textarea {
+  width: 100%; padding: 10px 13px;
+  border: 1.5px solid var(--border); border-radius: 7px;
+  font-size: .9rem; font-family: inherit; color: var(--text);
+  background: #fff; transition: border-color .2s; appearance: none;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--azul-light);
+  box-shadow: 0 0 0 3px rgba(43,83,153,.12);
+}
+textarea { resize: vertical; min-height: 80px; }
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231B3A6B' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+@media(max-width:600px){ .grid-2,.grid-3 { grid-template-columns: 1fr; } }
+
+/* Semestre / Cuatrimestre */
+.periodo-wrap {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  border: 1.5px solid var(--azul); border-radius: 9px; overflow: hidden;
+  margin-top: 12px;
+}
+.periodo-col { padding: 16px 20px; }
+.periodo-col:first-child { border-right: 1.5px solid var(--border); }
+.periodo-col-title {
+  font-size: .78rem; font-weight: 700; text-transform: uppercase;
+  color: var(--azul); letter-spacing: .7px; margin-bottom: 12px;
+  padding-bottom: 8px; border-bottom: 2px solid var(--azul);
+}
+.radio-row {
+  display: flex; align-items: center; gap: 0; margin-bottom: 6px; cursor: pointer;
+  border: 1.5px solid var(--border); border-radius: 7px;
+  padding: 8px 12px; transition: border-color .15s, background .15s;
+}
+.radio-row:hover { border-color: var(--azul-light); background: #F0F4FF; }
+.radio-row input[type="radio"] { width: 15px; height: 15px; accent-color: var(--azul); cursor: pointer; flex-shrink: 0; margin: 0 10px 0 0; }
+.radio-row span { font-size: .88rem; line-height: 1.2; }
+.radio-row input:checked ~ span { color: var(--azul); font-weight: 600; }
+.radio-row:has(input:checked) { border-color: var(--azul); background: #EEF2FA; }
+
+/* Checkbox toggle */
+.check-row { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.check-row input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--azul); cursor: pointer; }
+.check-row span { font-size: .9rem; font-weight: 500; }
+.conditional { display: none; margin-top: 12px; }
+.conditional.visible { display: block; }
+
+/* File input */
+.file-wrap {
+  border: 2px dashed var(--border); border-radius: 8px;
+  padding: 14px 16px; background: #F7F9FC; text-align: center;
+  cursor: pointer; transition: border-color .2s;
+}
+.file-wrap:hover { border-color: var(--azul-light); }
+.file-wrap input[type="file"] { display: none; }
+.file-label { font-size: .83rem; color: var(--muted); display: block; }
+.file-label strong { color: var(--azul-light); }
+.file-preview { margin-top: 8px; font-size: .8rem; color: var(--green); font-weight: 600; }
+
+/* Sección 2 – controles superiores */
+.eventos-toolbar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
+}
+.btn-add {
+  background: var(--azul); color: #fff;
+  border: none; padding: 9px 18px; border-radius: 7px;
+  font-size: .88rem; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; transition: background .15s;
+}
+.btn-add:hover { background: var(--azul-light); }
+.eventos-hint { font-size: .8rem; color: var(--muted); }
+
+/* Evento card */
+.evento-card {
+  background: #F7F9FC; border: 1.5px solid var(--border);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 14px;
+}
+.evento-card-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+}
+.evento-num {
+  font-size: .82rem; font-weight: 700; background: var(--azul);
+  color: #fff; padding: 3px 11px; border-radius: 20px;
+}
+.evento-actions { display: flex; gap: 8px; }
+.btn-copy, .btn-remove {
+  border: none; border-radius: 6px; padding: 5px 12px;
+  font-size: .78rem; font-weight: 600; cursor: pointer; transition: opacity .15s;
+}
+.btn-copy   { background: #E8F0FE; color: var(--azul-light); }
+.btn-copy:hover   { opacity: .8; }
+.btn-remove { background: #FDE8E8; color: var(--danger); }
+.btn-remove:hover { opacity: .8; }
+
+/* Time grid */
+.time-grid-label { font-size: .8rem; font-weight: 600; color: var(--azul); margin-bottom: 6px; }
+.time-grid-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
+.legend-dot { display: flex; align-items: center; gap: 5px; font-size: .75rem; color: var(--muted); }
+.dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.dot-free  { background: var(--slot-free); border: 1px solid #91c99a; }
+.dot-book  { background: var(--slot-book); border: 1px solid #e8a5a5; }
+.dot-sel   { background: var(--slot-sel);  border: 1px solid #2563eb; }
+.time-grid { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; min-height: 40px; }
+.time-slot {
+  padding: 5px 7px; border-radius: 5px; font-size: .72rem; font-weight: 600;
+  cursor: pointer; user-select: none; border: 1.5px solid transparent; transition: transform .08s;
+}
+.time-slot.free  { background: var(--slot-free); border-color: #91c99a; color: #1a5c30; }
+.time-slot.free:hover { transform: scale(1.08); border-color: var(--green); }
+.time-slot.booked { background: var(--slot-book); border-color: #e8a5a5; color: #8c1f1f; cursor: not-allowed; opacity: .75; }
+.time-slot.selected, .time-slot.endpoint { background: var(--slot-sel); border-color: #1d4ed8; color: #fff; }
+.time-slot.in-range { background: #93C5FD; border-color: #60a5fa; color: #1e3a8a; }
+.time-slot.cutoff   { background: #FEF3C7; border-color: #F59E0B; color: #92400E; cursor: not-allowed; opacity: .8; }
+.time-sel-info { font-size: .8rem; color: var(--azul-light); font-weight: 600; margin-bottom: 6px; min-height: 18px; }
+.time-loading { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .82rem; padding: 8px 0; }
+.spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--azul); border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Submit */
+.submit-area { text-align: center; margin-top: 32px; }
+.btn-submit {
+  background: var(--dorado); color: var(--azul);
+  border: none; padding: 14px 48px; border-radius: 8px;
+  font-size: 1rem; font-weight: 700; cursor: pointer;
+  transition: background .15s, transform .1s;
+  box-shadow: 0 4px 14px rgba(200,169,81,.35);
+}
+.btn-submit:hover { background: #b8952e; transform: translateY(-1px); }
+.btn-submit:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+/* Overlay */
+#overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(27,58,107,.55); z-index: 999;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px; color: #fff; font-weight: 600; font-size: 1rem;
+}
+#overlay.active { display: flex; }
+#overlay .big-spinner {
+  width: 48px; height: 48px;
+  border: 4px solid rgba(255,255,255,.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin .8s linear infinite;
+}
+
+/* Resultado */
+#result-msg { display: none; padding: 20px 24px; border-radius: var(--radius); margin-top: 24px; font-size: .92rem; line-height: 1.6; }
+#result-msg.ok  { background: #D6F5E3; border: 1.5px solid #6fcf97; color: #0f4c25; }
+#result-msg.err { background: #FDE8E8; border: 1.5px solid #e5a0a0; color: #6b1111; }
+
+.field-err { font-size: .78rem; color: var(--danger); margin-top: 4px; display: none; }
+.invalid { border-color: var(--danger) !important; }
+
+/* Botón toggle período */
+.btn-toggle-periodo {
+  background: var(--azul); border: none; border-radius: 6px;
+  padding: 7px 16px; font-size: .82rem; font-weight: 600; color: #fff;
+  cursor: pointer; transition: opacity .15s; white-space: nowrap;
+}
+.btn-toggle-periodo:hover { opacity: .85; }
+
+/* Requerimientos especiales – grid de checkboxes */
+.req-esp-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px;
+}
+.req-esp-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 14px; border: 1.5px solid var(--border); border-radius: 8px;
+  cursor: pointer; font-size: .86rem; transition: border-color .15s, background .15s;
+}
+.req-esp-item:hover { border-color: var(--azul-light); background: #F0F4FF; }
+.req-esp-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--azul); flex-shrink: 0; margin-top: 1px; margin-right: 10px; }
+.req-esp-item span { line-height: 1.2; }
+.req-esp-item input:checked ~ span { color: var(--azul); font-weight: 600; }
+.req-esp-item:has(input:checked) { border-color: var(--azul); background: #EEF2FA; }
+</style>
+</head>
+<body>
+
+<script>
+var TOKEN   = '<?!= token ?>';
+var APP_URL = '<?!= appUrl ?>';
+</script>
+
+<header style="justify-content:space-between">
+  <div>
+    <div class="brand">Universidad de Valladolid <span>Yucatán</span></div>
+    <div class="subtitle">Departamento de Soporte Técnico – Solicitud de Espacios</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+    <span style="font-size:.85rem;opacity:.8">Sesión: <?!= nombre ?></span>
+    <button onclick="window.top.location.href=APP_URL+'?token='+TOKEN"
+      style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;
+             border-radius:7px;padding:7px 14px;font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap">
+      ← Menú
+    </button>
+  </div>
+</header>
+
+<div id="overlay">
+  <div class="big-spinner"></div>
+  <span id="overlay-msg">Procesando solicitud…</span>
+</div>
+
+<div class="container">
+
+  <!-- ══ SECCIÓN 1 ══ -->
+  <div class="section-header">
+    <span class="section-badge">SECCIÓN 1</span>
+    <span class="section-title">Información General de la Actividad</span>
+  </div>
+
+  <div class="card">
+
+    <div class="field">
+      <label class="required" for="titulo">Título de la Actividad</label>
+      <input type="text" id="titulo" placeholder="Nombre completo del evento o actividad">
+      <div class="field-err" id="err-titulo">Este campo es obligatorio.</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label class="required" for="director">Director de Academia</label>
+        <select id="director">
+          <option value="">— Selecciona un director —</option>
+          <?!= buildDirectorOptions(); ?>
+        </select>
+        <div class="field-err" id="err-director">Selecciona un director.</div>
+      </div>
+      <div class="field">
+        <label class="required" for="docente">Docente o Administrativo Responsable</label>
+        <input type="text" id="docente" placeholder="Nombre completo">
+        <div class="field-err" id="err-docente">Este campo es obligatorio.</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label for="materia">Materia</label>
+        <input type="text" id="materia" placeholder="Nombre de la materia">
+      </div>
+      <div class="field">
+        <label class="required" for="num-alumnos">Número de Alumnos</label>
+        <input type="number" id="num-alumnos" min="1" max="9999" placeholder="Ej. 35">
+        <div class="field-err" id="err-alumnos">Ingresa un número válido.</div>
+      </div>
+    </div>
+
+    <!-- Semestre / Cuatrimestre -->
+    <div class="field">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <label style="margin:0">Semestre / Cuatrimestre</label>
+        <button type="button" class="btn-toggle-periodo" onclick="togglePeriodo(this)">▼ Mostrar opciones</button>
+      </div>
+      <div id="section-periodo" style="display:none">
+      <div class="periodo-wrap">
+        <div class="periodo-col">
+          <div class="periodo-col-title">Semestre</div>
+          <label class="radio-row"><input type="radio" name="periodo" value="Todos los Semestres"><span>Todos los Semestres</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="1er Semestre"><span>1er Semestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="2do Semestre"><span>2do Semestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="3er Semestre"><span>3er Semestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="4to Semestre"><span>4to Semestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="5to Semestre"><span>5to Semestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="6to Semestre"><span>6to Semestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="7mo Semestre"><span>7mo Semestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="8vo Semestre"><span>8vo Semestre</span></label>
+        </div>
+        <div class="periodo-col">
+          <div class="periodo-col-title">Cuatrimestre</div>
+          <label class="radio-row"><input type="radio" name="periodo" value="Todos los Cuatrimestres"><span>Todos los Cuatrimestres</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="1er Cuatrimestre"><span>1er Cuatrimestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="2do Cuatrimestre"><span>2do Cuatrimestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="3er Cuatrimestre"><span>3er Cuatrimestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="4to Cuatrimestre"><span>4to Cuatrimestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="5to Cuatrimestre"><span>5to Cuatrimestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="6to Cuatrimestre"><span>6to Cuatrimestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="7mo Cuatrimestre"><span>7mo Cuatrimestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="8vo Cuatrimestre"><span>8vo Cuatrimestre</span></label>
+          <label class="radio-row"><input type="radio" name="periodo" value="9no Cuatrimestre"><span>9no Cuatrimestre</span></label>
+        </div>
+      </div>
+
+      <!-- Agente externo -->
+      <div style="margin-top:10px">
+        <label class="radio-row" style="border-color:var(--azul-light)">
+          <input type="radio" name="periodo" value="__externo__" onchange="toggleExterno(this)">
+          <span>Agente externo</span>
+        </label>
+        <div id="section-externo" style="display:none;margin-top:8px">
+          <input type="text" id="periodo-externo" placeholder="Nombre de la asociación o institución externa…"
+            style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem;box-sizing:border-box">
+        </div>
+      </div>
+
+      </div><!-- /section-periodo -->
+    </div>
+
+    <!-- Tipo de evento -->
+    <div class="field">
+      <label class="required" for="tipo-evento">Tipo de Evento</label>
+      <select id="tipo-evento">
+        <option value="">— Selecciona el tipo —</option>
+        <option value="Actividad deportiva">Actividad deportiva — Evento relacionado con la práctica, exhibición o promoción de actividades deportivas.</option>
+        <option value="Conferencia en vivo">Conferencia en vivo — Exposición o charla impartida presencialmente por uno o varios ponentes.</option>
+        <option value="Conferencia online">Conferencia online — Conferencia realizada mediante una plataforma virtual.</option>
+        <option value="Curso">Curso — Actividad formativa estructurada para adquirir conocimientos sobre un tema específico.</option>
+        <option value="Entrega de certificados">Entrega de certificados — Acto en el que se otorgan certificados, constancias o reconocimientos.</option>
+        <option value="Graduación">Graduación — Ceremonia institucional para celebrar la conclusión de estudios.</option>
+        <option value="Inducción">Inducción — Actividad para familiarizar a nuevos estudiantes o integrantes con la institución.</option>
+        <option value="Obra de teatro">Obra de teatro — Representación escénica realizada por estudiantes, docentes o artistas invitados.</option>
+        <option value="Plática / Charla">Plática / Charla — Presentación breve e informativa sobre un tema de interés académico o profesional.</option>
+        <option value="Presentación de proyecto">Presentación de proyecto — Exposición de un proyecto académico, tecnológico, empresarial o de investigación.</option>
+        <option value="Seminario">Seminario — Sesión académica de análisis, discusión y presentación de un tema especializado.</option>
+        <option value="Taller">Taller — Actividad práctica orientada al aprendizaje o desarrollo de una habilidad.</option>
+      </select>
+      <div class="field-err" id="err-tipo">Selecciona el tipo de evento.</div>
+    </div>
+
+    <!-- Requerimientos -->
+    <div class="field">
+      <label class="required" for="requerimientos">Requerimientos</label>
+      <textarea id="requerimientos" placeholder="Describe los requerimientos generales (sillas, mesas, proyector, pantalla, etc.)…"></textarea>
+      <div class="field-err" id="err-req">Este campo es obligatorio.</div>
+    </div>
+
+    <!-- Requerimientos especiales -->
+    <div class="field">
+      <label>Requerimientos Especiales</label>
+      <label class="check-row">
+        <input type="checkbox" id="chk-reqesp" onchange="toggleReqEsp()">
+        <span>Tengo requerimientos especiales durante mi actividad</span>
+      </label>
+      <div class="conditional" id="section-reqesp">
+        <div class="req-esp-grid" style="margin-top:12px">
+          <label class="req-esp-item"><input type="checkbox" name="req-esp" value="Cámara para conferencia online"><span>Cámara para conferencia online</span></label>
+          <label class="req-esp-item"><input type="checkbox" name="req-esp" value="Cámara para transmisión en vivo"><span>Cámara para transmisión en vivo</span></label>
+          <label class="req-esp-item"><input type="checkbox" name="req-esp" value="Coffee break"><span>Coffee break</span></label>
+          <label class="req-esp-item"><input type="checkbox" name="req-esp" value="Extensiones eléctricas"><span>Extensiones eléctricas</span></label>
+          <label class="req-esp-item"><input type="checkbox" name="req-esp" value="Mamparas"><span>Mamparas</span></label>
+          <label class="req-esp-item"><input type="checkbox" name="req-esp" value="Mesas adicionales"><span>Mesas adicionales</span></label>
+          <label class="req-esp-item"><input type="checkbox" name="req-esp" value="Múltiples elementos a proyectar"><span>Múltiples elementos a proyectar</span></label>
+          <label class="req-esp-item"><input type="checkbox" name="req-esp" value="Podium"><span>Podium</span></label>
+          <label class="req-esp-item"><input type="checkbox" name="req-esp" value="Sillas adicionales"><span>Sillas adicionales</span></label>
+          <label class="req-esp-item"><input type="checkbox" name="req-esp" value="Transmisión en línea"><span>Transmisión en línea</span></label>
+          <label class="req-esp-item"><input type="checkbox" name="req-esp" value="WiFi"><span>WiFi</span></label>
+        </div>
+        <div style="margin-top:10px">
+          <input type="text" id="req-esp-otro" placeholder="Otro requerimiento no listado…" style="width:100%">
+        </div>
+      </div>
+    </div>
+
+    <!-- Fotografía / Video -->
+    <div class="field">
+      <label for="foto-video">Requiere Fotografía, Video y/o Publicación en Página Principal</label>
+      <textarea id="foto-video" rows="2" placeholder="Describe qué tipo de apoyo necesitas…"></textarea>
+    </div>
+
+
+
+  </div><!-- /card -->
+
+  <!-- ══ SECCIÓN 2 ══ -->
+  <div class="section-header">
+    <span class="section-badge">SECCIÓN 2</span>
+    <span class="section-title">Espacios y Horarios</span>
+  </div>
+
+  <div class="card">
+    <div class="eventos-toolbar">
+      <button class="btn-add" type="button" onclick="addEventBlock(null)">
+        ＋ Añadir día
+      </button>
+      <span class="eventos-hint">Cada bloque representa un día y espacio independiente.</span>
+    </div>
+    <div id="eventos-container"></div>
+    <div id="no-eventos" style="color:var(--muted);font-size:.85rem;padding:8px 0">
+      Usa el botón <strong>＋ Añadir día</strong> para agregar el primer día.
+    </div>
+  </div>
+
+  <div class="submit-area">
+    <button class="btn-submit" type="button" onclick="enviarFormulario()">Enviar Solicitud</button>
+  </div>
+  <div id="result-msg"></div>
+
+</div><!-- /container -->
+
+<script>
+// ══ Estado global ════════════════════════════════════════════
+var blockCounter  = 0;
+var eventoStates  = {};
+var SLOTS = (function() {
+  var s = [];
+  for (var h = 7; h <= 21; h++) {
+    for (var m = 0; m < 60; m += 30) {
+      if (h === 21 && m > 0) break;
+      s.push(pad(h) + ':' + pad(m));
+    }
+  }
+  return s;
+})();
+
+function pad(n) { return n < 10 ? '0' + n : String(n); }
+function toMin(t) { var p = t.split(':'); return +p[0] * 60 + +p[1]; }
+
+// Fecha mínima permitida = ahora + 24 h
+function min24h() {
+  var d = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  return d;
+}
+function minDateStr() {
+  var d = min24h();
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+// Si el día seleccionado es exactamente el día límite, devuelve "HH:MM" de corte; si no, null
+function getCutoffTime(selectedDate) {
+  var d = min24h();
+  var limitDateStr = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+  if (selectedDate === limitDateStr) {
+    return pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+  return null;
+}
+
+
+function toggleReqEsp() {
+  var show = document.getElementById('chk-reqesp').checked;
+  document.getElementById('section-reqesp').classList.toggle('visible', show);
+}
+
+function togglePeriodo(btn) {
+  var sec = document.getElementById('section-periodo');
+  var visible = sec.style.display !== 'none';
+  sec.style.display = visible ? 'none' : 'block';
+  btn.textContent = visible ? '▼ Mostrar opciones' : '▲ Ocultar opciones';
+}
+
+function toggleExterno(radio) {
+  var sec = document.getElementById('section-externo');
+  sec.style.display = radio.checked ? 'block' : 'none';
+  if (radio.checked) document.getElementById('periodo-externo').focus();
+}
+
+// Ocultar campo externo al seleccionar cualquier otro periodo
+document.addEventListener('change', function(e) {
+  if (e.target.name === 'periodo' && e.target.value !== '__externo__') {
+    document.getElementById('section-externo').style.display = 'none';
+    document.getElementById('periodo-externo').value = '';
+  }
+});
+
+// ══ Preview de archivo ══════════════════════════════════════
+function previewFile(input, previewId) {
+  var prev = document.getElementById(previewId);
+  if (input.files && input.files[0]) {
+    prev.textContent = '✓ ' + input.files[0].name + ' (' + (input.files[0].size / 1024).toFixed(1) + ' KB)';
+  } else {
+    prev.textContent = '';
+  }
+}
+
+// ══ Construir card de evento ════════════════════════════════
+function buildEventoCard(idx) {
+  var card = document.createElement('div');
+  card.className = 'evento-card';
+  card.id = 'evento-card-' + idx;
+
+  card.innerHTML =
+    '<div class="evento-card-header">' +
+      '<span class="evento-num" id="label-' + idx + '">Día #</span>' +
+      '<div class="evento-actions">' +
+        '<button class="btn-copy" type="button" onclick="copyBlock(' + idx + ')">⎘ Copiar bloque</button>' +
+        '<button class="btn-remove" type="button" onclick="removeBlock(' + idx + ')">✕ Eliminar</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="grid-2">' +
+      '<div class="field">' +
+        '<label>Espacio solicitado</label>' +
+        '<select id="espacio-' + idx + '" onchange="onEspacioFechaChange(' + idx + ',null)">' +
+          '<option value="">— Selecciona un espacio —</option>' +
+          '<option value="Auditorio">Auditorio</option>' +
+          '<option value="Biblioteca">Biblioteca</option>' +
+          '<option value="Sala de Juicios Orales">Sala de Juicios Orales</option>' +
+          '<option value="Anexo de la Biblioteca">Anexo de la Biblioteca</option>' +
+          '<option value="Cancha de Usos Múltiples">Cancha de Usos Múltiples</option>' +
+          '<option value="Ágora">Ágora</option>' +
+          '<option value="Salón de Restaurante">Salón de Restaurante</option>' +
+          '<option value="Laboratorio de Neuropsicología">Laboratorio de Neuropsicología</option>' +
+          '<option value="Piscina">Piscina</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="field">' +
+        '<label>Fecha</label>' +
+        '<input type="date" id="fecha-' + idx + '" min="' + minDateStr() + '" onchange="onEspacioFechaChange(' + idx + ',null)">' +
+      '</div>' +
+    '</div>' +
+    '<div class="time-grid-label">Selecciona horario <small style="color:var(--muted);font-weight:400">(1er clic = inicio · 2do clic = fin)</small></div>' +
+    '<div class="time-grid-legend">' +
+      '<div class="legend-dot"><span class="dot dot-free"></span>Disponible</div>' +
+      '<div class="legend-dot"><span class="dot dot-book"></span>Ocupado</div>' +
+      '<div class="legend-dot"><span class="dot dot-sel"></span>Seleccionado</div>' +
+      '<div class="legend-dot"><span class="dot" style="background:#FEF3C7;border:1px solid #F59E0B"></span>Menos de 24 h</div>' +
+    '</div>' +
+    '<div id="grid-' + idx + '" class="time-grid"><span style="color:var(--muted);font-size:.8rem">Selecciona espacio y fecha para ver disponibilidad.</span></div>' +
+    '<div class="time-sel-info" id="info-' + idx + '"></div>' +
+    '<input type="hidden" id="inicio-' + idx + '">' +
+    '<input type="hidden" id="fin-' + idx + '">';
+
+  return card;
+}
+
+// ══ Añadir bloque ══════════════════════════════════════════
+function addEventBlock(copyFromIdx) {
+  blockCounter++;
+  var idx = blockCounter;
+  eventoStates[idx] = { step: 0, start: null, booked: [] };
+
+  var card = buildEventoCard(idx);
+  document.getElementById('eventos-container').appendChild(card);
+  document.getElementById('no-eventos').style.display = 'none';
+
+  if (copyFromIdx) {
+    var espacio = document.getElementById('espacio-' + copyFromIdx).value;
+    var fecha   = document.getElementById('fecha-'   + copyFromIdx).value;
+    var inicio  = document.getElementById('inicio-'  + copyFromIdx).value;
+    var fin     = document.getElementById('fin-'     + copyFromIdx).value;
+
+    document.getElementById('espacio-' + idx).value = espacio;
+    document.getElementById('fecha-'   + idx).value = fecha;
+
+    if (espacio && fecha) {
+      onEspacioFechaChange(idx, { inicio: inicio, fin: fin });
+    }
+  }
+
+  updateBlockNumbers();
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ══ Copiar bloque (inserta debajo del actual) ════════════
+function copyBlock(fromIdx) {
+  blockCounter++;
+  var idx = blockCounter;
+  eventoStates[idx] = { step: 0, start: null, booked: [] };
+
+  var card = buildEventoCard(idx);
+  var fromCard = document.getElementById('evento-card-' + fromIdx);
+  fromCard.parentNode.insertBefore(card, fromCard.nextSibling);
+  document.getElementById('no-eventos').style.display = 'none';
+
+  var espacio = document.getElementById('espacio-' + fromIdx).value;
+  var fecha   = document.getElementById('fecha-'   + fromIdx).value;
+  var inicio  = document.getElementById('inicio-'  + fromIdx).value;
+  var fin     = document.getElementById('fin-'     + fromIdx).value;
+
+  document.getElementById('espacio-' + idx).value = espacio;
+  document.getElementById('fecha-'   + idx).value = fecha;
+
+  if (espacio && fecha) {
+    onEspacioFechaChange(idx, { inicio: inicio, fin: fin });
+  }
+
+  updateBlockNumbers();
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ══ Eliminar bloque ═════════════════════════════════════
+function removeBlock(idx) {
+  var card = document.getElementById('evento-card-' + idx);
+  if (card) card.remove();
+  delete eventoStates[idx];
+  updateBlockNumbers();
+  if (document.querySelectorAll('.evento-card').length === 0) {
+    document.getElementById('no-eventos').style.display = 'block';
+  }
+}
+
+// ══ Renumerar bloques ════════════════════════════════════
+function updateBlockNumbers() {
+  var cards = document.querySelectorAll('.evento-card');
+  cards.forEach(function(card, i) {
+    var lbl = card.querySelector('.evento-num');
+    if (lbl) lbl.textContent = 'Día ' + (i + 1);
+  });
+}
+
+// ══ Disponibilidad ═══════════════════════════════════════
+function onEspacioFechaChange(idx, prefill) {
+  var espacio = document.getElementById('espacio-' + idx).value;
+  var fecha   = document.getElementById('fecha-'   + idx).value;
+  if (!espacio || !fecha) return;
+
+  var grid = document.getElementById('grid-' + idx);
+  grid.innerHTML = '<div class="time-loading"><div class="spinner"></div>Cargando disponibilidad…</div>';
+
+  if (!prefill) {
+    eventoStates[idx].step  = 0;
+    eventoStates[idx].start = null;
+    document.getElementById('inicio-' + idx).value = '';
+    document.getElementById('fin-'   + idx).value  = '';
+    document.getElementById('info-'  + idx).textContent = '';
+  }
+
+  var cutoff = getCutoffTime(fecha);
+
+  google.script.run
+    .withSuccessHandler(function(booked) {
+      if (booked && booked.error) {
+        grid.innerHTML = '<span style="color:var(--danger);font-size:.8rem">Error: ' + booked.error + '</span>';
+        return;
+      }
+      eventoStates[idx].booked  = booked || [];
+      eventoStates[idx].cutoff  = cutoff;
+      renderTimeGrid(idx, eventoStates[idx].booked, cutoff);
+
+      if (prefill && prefill.inicio && prefill.fin) {
+        document.getElementById('inicio-' + idx).value = prefill.inicio;
+        document.getElementById('fin-'   + idx).value  = prefill.fin;
+        document.getElementById('info-'  + idx).textContent = '✓ Horario: ' + prefill.inicio + ' – ' + prefill.fin;
+        paintGrid(idx, prefill.inicio, prefill.fin);
+      }
+    })
+    .withFailureHandler(function(err) {
+      grid.innerHTML = '<span style="color:var(--danger);font-size:.8rem">Error: ' + err.message + '</span>';
+    })
+    .getAvailability(espacio, fecha);
+}
+
+function renderTimeGrid(idx, booked, cutoff) {
+  var grid = document.getElementById('grid-' + idx);
+  grid.innerHTML = '';
+  SLOTS.forEach(function(slot) {
+    var div = document.createElement('div');
+    div.dataset.slot = slot;
+    div.textContent = slot;
+    if (isSlotBooked(slot, booked)) {
+      div.className = 'time-slot booked';
+      div.title = 'Horario ocupado';
+    } else if (cutoff && slot < cutoff) {
+      div.className = 'time-slot cutoff';
+      div.title = 'No disponible – menos de 24 h de anticipación';
+    } else {
+      div.className = 'time-slot free';
+      div.addEventListener('click', function() { handleTimeClick(idx, slot); });
+    }
+    grid.appendChild(div);
+  });
+}
+
+function isSlotBooked(slot, booked) {
+  var sm = toMin(slot);
+  return booked.some(function(b) { return sm >= toMin(b.inicio) && sm < toMin(b.fin); });
+}
+
+function handleTimeClick(idx, slot) {
+  var state = eventoStates[idx];
+  var info  = document.getElementById('info-' + idx);
+
+  if (state.step === 0) {
+    state.step  = 1;
+    state.start = slot;
+    document.getElementById('inicio-' + idx).value = slot;
+    document.getElementById('fin-'   + idx).value  = '';
+    info.textContent = '✓ Inicio: ' + slot + '  —  Ahora selecciona la hora de fin';
+    paintGrid(idx, slot, null);
+  } else {
+    if (toMin(slot) <= toMin(state.start)) {
+      info.textContent = '⚠ La hora de fin debe ser posterior al inicio. Selecciona de nuevo.';
+      state.step = 0; state.start = null;
+      document.getElementById('inicio-' + idx).value = '';
+      paintGrid(idx, null, null);
+      return;
+    }
+    var conflict = state.booked.some(function(b) {
+      return toMin(b.inicio) < toMin(slot) && toMin(b.fin) > toMin(state.start);
+    });
+    if (conflict) {
+      info.textContent = '⚠ El rango incluye horarios ocupados. Elige otro rango.';
+      state.step = 0; state.start = null;
+      paintGrid(idx, null, null);
+      return;
+    }
+    // Verificar conflicto con otros bloques del mismo espacio y fecha
+    var espacioActual = document.getElementById('espacio-' + idx).value;
+    var fechaActual   = document.getElementById('fecha-'   + idx).value;
+    var nuevoIni = toMin(state.start), nuevoFin = toMin(slot);
+    var duplicado = false;
+
+    document.querySelectorAll('.evento-card').forEach(function(card) {
+      var otherId = card.id.replace('evento-card-', '');
+      if (otherId === String(idx)) return;
+      var oEsp = document.getElementById('espacio-' + otherId).value;
+      var oFec = document.getElementById('fecha-'   + otherId).value;
+      var oIni = document.getElementById('inicio-'  + otherId).value;
+      var oFin = document.getElementById('fin-'     + otherId).value;
+      if (oEsp === espacioActual && oFec === fechaActual && oIni && oFin) {
+        if (nuevoIni < toMin(oFin) && nuevoFin > toMin(oIni)) {
+          duplicado = true;
+        }
+      }
+    });
+
+    if (duplicado) {
+      info.textContent = '⚠ Este horario se traslapa con otro bloque del mismo espacio y fecha. Selecciona de nuevo.';
+      state.step = 0; state.start = null;
+      document.getElementById('inicio-' + idx).value = '';
+      paintGrid(idx, null, null);
+      return;
+    }
+
+    var startVal = state.start;
+    state.step = 0; state.start = null;
+    document.getElementById('inicio-' + idx).value = startVal;
+    document.getElementById('fin-'   + idx).value  = slot;
+    info.textContent = '✓ Horario: ' + startVal + ' – ' + slot;
+    paintGrid(idx, startVal, slot);
+  }
+}
+
+function paintGrid(idx, start, end) {
+  var state  = eventoStates[idx] || {};
+  var booked = state.booked || [];
+  var cutoff = state.cutoff || null;
+  var grid   = document.getElementById('grid-' + idx);
+  if (!grid) return;
+  Array.from(grid.querySelectorAll('.time-slot')).forEach(function(el) {
+    var s = el.dataset.slot;
+    if (isSlotBooked(s, booked))          { el.className = 'time-slot booked'; return; }
+    if (cutoff && s < cutoff)             { el.className = 'time-slot cutoff'; return; }
+    if (!start)                           { el.className = 'time-slot free';   return; }
+    var sm = toMin(s);
+    if (end) {
+      if (s === start || s === end)                        el.className = 'time-slot endpoint selected';
+      else if (sm > toMin(start) && sm < toMin(end))       el.className = 'time-slot in-range';
+      else                                                  el.className = 'time-slot free';
+    } else {
+      el.className = s === start ? 'time-slot endpoint selected' : 'time-slot free';
+    }
+  });
+}
+
+
+// ══ Validación y envío ═══════════════════════════════════
+function clearErrors() {
+  document.querySelectorAll('.field-err').forEach(function(el) { el.style.display = 'none'; });
+  document.querySelectorAll('.invalid').forEach(function(el) { el.classList.remove('invalid'); });
+  document.querySelectorAll('.evento-card').forEach(function(c) { c.style.outline = ''; });
+}
+
+function showErr(fieldId, errId) {
+  var f = document.getElementById(fieldId), e = document.getElementById(errId);
+  if (f) f.classList.add('invalid');
+  if (e) e.style.display = 'block';
+}
+
+function enviarFormulario() {
+  clearErrors();
+  var ok = true;
+
+  var titulo    = document.getElementById('titulo').value.trim();
+  var director  = document.getElementById('director').value;
+  var docente   = document.getElementById('docente').value.trim();
+  var materia   = document.getElementById('materia').value.trim();
+  var numAl     = document.getElementById('num-alumnos').value;
+  var tipoEvt   = document.getElementById('tipo-evento').value;
+  var req       = document.getElementById('requerimientos').value.trim();
+  var reqEspArr = Array.from(document.querySelectorAll('input[name="req-esp"]:checked')).map(function(c){return c.value;});
+  var reqEspOtro = (document.getElementById('req-esp-otro').value || '').trim();
+  if (reqEspOtro) reqEspArr.push(reqEspOtro);
+  var reqEsp = reqEspArr.length === 0 ? '' :
+               reqEspArr.length === 1 ? 'Se requiere: ' + reqEspArr[0] + '.' :
+               'Se requiere: ' + reqEspArr.slice(0,-1).join(', ') + ' y ' + reqEspArr[reqEspArr.length-1] + '.';
+  var fotoVid   = document.getElementById('foto-video').value.trim();
+  var _periodoRaw = (document.querySelector('input[name="periodo"]:checked') || {}).value || '';
+  var periodo = _periodoRaw === '__externo__'
+    ? (document.getElementById('periodo-externo').value.trim() || 'Agente externo')
+    : _periodoRaw;
+
+  if (!titulo)   { showErr('titulo',      'err-titulo');   ok = false; }
+  if (!director) { showErr('director',    'err-director'); ok = false; }
+  if (!docente)  { showErr('docente',     'err-docente');  ok = false; }
+  if (!numAl || isNaN(parseInt(numAl))) { showErr('num-alumnos','err-alumnos'); ok = false; }
+  if (!tipoEvt)  { showErr('tipo-evento', 'err-tipo');     ok = false; }
+  if (!req)      { showErr('requerimientos','err-req');     ok = false; }
+
+  var cards = document.querySelectorAll('.evento-card');
+  if (cards.length === 0) { alert('Añade al menos un día en la Sección 2.'); ok = false; }
+
+  var eventos = [], eventoOk = true;
+  cards.forEach(function(card) {
+    var id  = card.id.replace('evento-card-', '');
+    var esp = document.getElementById('espacio-' + id).value;
+    var fec = document.getElementById('fecha-'   + id).value;
+    var ini = document.getElementById('inicio-'  + id).value;
+    var fin = document.getElementById('fin-'     + id).value;
+    if (!esp || !fec || !ini || !fin) {
+      card.style.outline = '2px solid var(--danger)';
+      eventoOk = false;
+    } else {
+      eventos.push({ espacio: esp, fecha: fec, inicio: ini, fin: fin });
+    }
+  });
+  if (!eventoOk) { alert('Completa el espacio, fecha y horario de todos los días.'); ok = false; }
+  if (!ok) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+
+  // Deshabilitar botón y mostrar overlay
+  document.querySelector('.btn-submit').disabled = true;
+  document.getElementById('overlay').classList.add('active');
+  document.getElementById('overlay-msg').textContent = 'Procesando solicitud…';
+
+  var data = {
+    titulo: titulo, director: director, docente: docente,
+    materia: materia, numAlumnos: parseInt(numAl, 10),
+    periodo: periodo, tipoEvento: tipoEvt,
+    requerimientos: req, requerimientosEspeciales: reqEsp,
+    fotoVideoPublicacion: fotoVid, eventos: eventos
+  };
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      document.getElementById('overlay').classList.remove('active');
+      document.querySelector('.btn-submit').disabled = false;
+      var msg = document.getElementById('result-msg');
+      if (res.ok) {
+        msg.className = 'ok';
+        var docWarn = res.docError ? '<br><span style="color:#92400E">⚠ El documento no se pudo generar: ' + res.docError + '</span>' : '';
+        var docLink = res.docUrl   ? '<br><a href="' + res.docUrl + '" target="_blank" style="color:#0f4c25">Ver documento generado →</a>' : '';
+        msg.innerHTML =
+          '<strong>✓ Solicitud enviada correctamente</strong><br>' +
+          'Folio: <strong>' + res.folio + '</strong>' +
+          docLink + docWarn;
+        resetForm();
+      } else {
+        msg.className = 'err';
+        msg.innerHTML = '<strong>✗ Error al procesar</strong><br>' + res.error;
+      }
+      msg.style.display = 'block';
+      msg.scrollIntoView({ behavior: 'smooth' });
+    })
+    .withFailureHandler(function(err) {
+      document.getElementById('overlay').classList.remove('active');
+      document.querySelector('.btn-submit').disabled = false;
+      var msg = document.getElementById('result-msg');
+      msg.className = 'err';
+      msg.innerHTML = '<strong>✗ Error de comunicación</strong><br>' + err.message;
+      msg.style.display = 'block';
+    })
+    .submitForm(data);
+}
+
+function resetForm() {
+  ['titulo','docente','materia','num-alumnos','requerimientos','foto-video']
+    .forEach(function(id) { document.getElementById(id).value = ''; });
+  document.getElementById('director').value    = '';
+  document.getElementById('tipo-evento').value = '';
+  document.getElementById('chk-reqesp').checked = false;
+  document.getElementById('section-reqesp').classList.remove('visible');
+  document.getElementById('section-externo').style.display = 'none';
+  document.getElementById('periodo-externo').value = '';
+  document.querySelectorAll('input[name="req-esp"]').forEach(function(c){c.checked=false;});
+  document.getElementById('req-esp-otro').value = '';
+  var secP = document.getElementById('section-periodo');
+  secP.style.display = 'none';
+  var btnP = document.querySelector('.btn-toggle-periodo');
+  if (btnP) btnP.textContent = '▼ Mostrar opciones';
+  document.querySelectorAll('input[name="periodo"]').forEach(function(r) { r.checked = false; });
+  document.getElementById('eventos-container').innerHTML = '';
+  document.getElementById('no-eventos').style.display = 'block';
+  eventoStates  = {};
+  blockCounter  = 0;
+}
+</script>
+</body>
+</html>
